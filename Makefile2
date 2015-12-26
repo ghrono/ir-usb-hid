@@ -1,0 +1,205 @@
+# Èìÿ: Makefile
+# Ïðîåêò: ïðèìåð hid-custom-rq
+# Àâòîð: Christian Starkjohann
+# Ïåðåâîä: microsin.ru 
+# Äàòà ñîçäàíèÿ: 2008-04-07
+# Òàáóëÿöèÿ: 4
+# Copyright: (c) 2008 by OBJECTIVE DEVELOPMENT Software GmbH
+# Ëèöåíçèÿ: GNU GPL v2 (ñì. License.txt) èëè ïðîïðèåòàðíàÿ (CommercialLicense.txt)
+# Ðåâèçèÿ: $Id: Makefile 553 2008-04-17 19:00:20Z cs $
+
+DEVICE  = atmega16
+F_CPU   = 16000000	# â Ãåðöàõ
+# ó ATMega16 ôóíêöèîíàë ïåðåìû÷åê ïî÷òè ñîâïàäàþò ñ ATMega8 - îòëè÷èå òîëüêî â 2 áèòàõ FUSE_H (6 è 7)
+FUSE_L  = ff
+FUSE_H  = 09
+#AVRDUDE = avrdude -c jtag2 -p $(DEVICE) -P usb:xx -v 
+JTAGICEII = "c:/Program Files/Atmel/AVR Tools/JTAGICEmkII/jtagiceii.exe" -d $(DEVICE) -mi
+
+CFLAGS  = -Iusbdrv -I. -DDEBUG_LEVEL=0
+OBJECTS = usbdrv/usbdrv.o usbdrv/usbdrvasm.o usbdrv/oddebug.o main.o
+
+#COMPILE = avr-gcc -Wall -Os -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
+#COMPILE = avr-gcc -Wall -O0 -gdwarf-2 -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
+COMPILE = avr-gcc -Wall -Os -gstabs -DF_CPU=$(F_CPU) $(CFLAGS) -mmcu=$(DEVICE)
+RAR = "c:/Program Files/WinRAR/WinRAR.exe"
+
+##############################################################################
+# Çíà÷åíèÿ ïåðåìû÷åê (ôüþçîâ) äëÿ îòäåëüíûõ òèïîâ ìèêðîêîíòðîëëåðîâ
+##############################################################################
+# Åñëè Âàø ìèêðîêîíòðîëëåð íå ïðèñóòñòâóåò çäåñü, ñì. ññûëêó
+#  http://palmavr.sourceforge.net/cgi-bin/fc.cgi
+#  è âûáåðèòå îïöèè äëÿ ÷àñòîòû êâàðöà è îòñóòñòâèå äåëèòåëÿ òàêòîâîé ÷àñòîòû
+#
+################################## ATMega8 ##################################
+# ATMega8 FUSE_L (ìëàäøèé áàéò ôüþçîâ):
+# 0x9f = 1 0 0 1   1 1 1 1
+#        ^ ^ \ /   \--+--/
+#        | |  |       +------- CKSEL 3..0 (âíåøíèé êðèñòàëë ñ ÷àñòîòîé > 8 ÌÃö)
+#        | |  +--------------- SUT 1..0 (ãåíåðàòîð ñ êðèñòàëëîì, BOD ðàçðåøåí)
+#        | +------------------ BODEN (BrownOut Detector ðàçðåøåí)
+#        +-------------------- BODLEVEL (2.7V)
+# ATMega8 FUSE_H (ñòàðøèé áàéò ôüþçîâ):
+# 0xc9 = 1 1 0 0   1 0 0 1 <-- BOOTRST (âåêòîð ñáðîñà çàãðóçêè 0x0000)
+#        ^ ^ ^ ^   ^ ^ ^------ BOOTSZ0
+#        | | | |   | +-------- BOOTSZ1
+#        | | | |   + --------- EESAVE (íå ñîõðàíÿòü EEPROM ïðè ñòèðàíèè ÷èïà)
+#        | | | +-------------- CKOPT (ïîëíûé ðàçìàõ âûõîäà ãåíåðàòîðà)
+#        | | +---------------- SPIEN (ðàçðåøèòü ïîñëåäîâàòåëüíîå ïðîãðàììèðîâàíèå)
+#        | +------------------ WDTON (WDT âêëþ÷åí íå âñåãäà)
+#        +-------------------- RSTDISBL (íîæêà ñáðîñà ðàçðåøåíà)
+#
+################################## ATMega16 ##################################
+# ATMega16 FUSE_L (ìëàäøèé áàéò ôüþçîâ):
+# 0xff = 1 1 1 1   1 1 1 1
+#        ^ ^ \ /   \--+--/
+#        | |  |       +------- CKSEL 3..0 (âíåøíèé êðèñòàëë ñ ÷àñòîòîé > 8 ÌÃö)
+#        | |  +--------------- SUT 1..0 (ãåíåðàòîð ñ êðèñòàëëîì, ìåäëåííîå íàðàñòàíèå óðîâíÿ ïèòàíèÿ)
+#        | +------------------ BODEN (BrownOut Detector çàïðåùåí)
+#        +-------------------- BODLEVEL (2.7V)
+# ATMega16 FUSE_H (ñòàðøèé áàéò ôüþçîâ):
+# 0x09 = 0 0 0 0   1 0 0 1 <-- BOOTRST (âåêòîð ñáðîñà çàãðóçêè 0x0000)
+#        ^ ^ ^ ^   ^ ^ ^------ BOOTSZ0
+#        | | | |   | +-------- BOOTSZ1
+#        | | | |   + --------- EESAVE (íå ñîõðàíÿòü EEPROM ïðè ñòèðàíèè ÷èïà)
+#        | | | +-------------- CKOPT (ïîëíûé ðàçìàõ âûõîäà ãåíåðàòîðà)
+#        | | +---------------- SPIEN (ðàçðåøèòü ïîñëåäîâàòåëüíîå ïðîãðàììèðîâàíèå)
+#        | +------------------ JTAGEN (çàïðîãðàììèðîâàí, JTAG ðàçðåøåí)
+#        +-------------------- OCDEN (çàïðîãðàììèðîâàí, OCD ðàçðåøåí)
+#
+############################## ATMega48/88/168 ##############################
+# ATMega*8 FUSE_L (ìëàäøèé áàéò ôüþçîâ):
+# 0xdf = 1 1 0 1   1 1 1 1
+#        ^ ^ \ /   \--+--/
+#        | |  |       +------- CKSEL 3..0 (âíåøíèé êðèñòàëë ñ ÷àñòîòîé > 8 ÌÃö)
+#        | |  +--------------- SUT 1..0 (ãåíåðàòîð ñ êðèñòàëëîì, BOD ðàçðåøåí)
+#        | +------------------ CKOUT (åñëè 0: âûõîä òàêòîâ ðàçðåøåí)
+#        +-------------------- CKDIV8 (åñëè 0: âêëþ÷åí äåëèòåëü òàêòîâ 8)
+# ATMega*8 FUSE_H (ñòàðøèé áàéò ôüþçîâ):
+# 0xde = 1 1 0 1   1 1 1 0
+#        ^ ^ ^ ^   ^ \-+-/
+#        | | | |   |   +------ BODLEVEL 0..2 (110 = 1.8 V)
+#        | | | |   + --------- EESAVE (ñîõðàíÿòü EEPROM ïðè ñòèðàíèè ÷èïà)
+#        | | | +-------------- WDTON (åñëè 0: watchdog âñåãäà âêëþ÷åí)
+#        | | +---------------- SPIEN (ðàçðåøèòü ïîñëåäîâàòåëüíîå ïðîãðàììèðîâàíèå)
+#        | +------------------ DWEN (ðàçðåøèòü debug wire)
+#        +-------------------- RSTDISBL (íîæêà ñáðîñà ðàçðåøåíà)
+#
+############################## ATTiny25/45/85 ###############################
+# ATMega*5 FUSE_L (ìëàäøèé áàéò ôüþçîâ):
+# 0xef = 1 1 1 0   1 1 1 1
+#        ^ ^ \+/   \--+--/
+#        | |  |       +------- CKSEL 3..0 (âûáîð òàêòîâîé ÷àñòîòû -> êðèñòàëë @ 12 MHz)
+#        | |  +--------------- SUT 1..0 (BOD ðàçðåøåí, áûñòðîå íàðàñòàíèå óðîâíÿ ïèòàíèÿ)
+#        | +------------------ CKOUT (âûõîä òàêòîâ íà íîæêå CKOUT -> çàïðåùåí)
+#        +-------------------- CKDIV8 (äåëèòåëü òàêòîâ íà 8 -> çàïðåùåí)
+# ATMega*5 FUSE_H (ñòàðøèé áàéò ôüþçîâ):
+# 0xdd = 1 1 0 1   1 1 0 1
+#        ^ ^ ^ ^   ^ \-+-/ 
+#        | | | |   |   +------ BODLEVEL 2..0 (óðîâåíü òðèããåðà brownout -> 2.7V)
+#        | | | |   +---------- EESAVE (ñîõðàíÿòü EEPROM ïðè ñòèðàíèè ÷èïà -> íåò)
+#        | | | +-------------- WDTON (watchdog âñåãäà âêëþ÷åí -> çàïðåùåíî)
+#        | | +---------------- SPIEN (ðàçðåøèòü ïîñëåäîâàòåëüíîå ïðîãðàììèðîâàíèå -> äà)
+#        | +------------------ DWEN (ðàçðåøèòü debug wire)
+#        +-------------------- RSTDISBL (çàïðåò âíåøíåãî ñáðîñà -> íåò)
+#
+################################ ATTiny2313 #################################
+# ATTiny2313 FUSE_L (ìëàäøèé áàéò ôüþçîâ):
+# 0xef = 1 1 1 0   1 1 1 1
+#        ^ ^ \+/   \--+--/
+#        | |  |       +------- CKSEL 3..0 (âûáîð òàêòîâîé ÷àñòîòû -> êðèñòàëë @ 12 MHz)
+#        | |  +--------------- SUT 1..0 (BOD ðàçðåøåí, áûñòðîå íàðàñòàíèå óðîâíÿ ïèòàíèÿ)
+#        | +------------------ CKOUT (âûõîä òàêòîâ íà íîæêå CKOUT -> çàïðåùåí)
+#        +-------------------- CKDIV8 (äåëèòåëü òàêòîâ íà 8 -> çàïðåùåí)
+# ATTiny2313 FUSE_H (ñòàðøèé áàéò ôüþçîâ):
+# 0xdb = 1 1 0 1   1 0 1 1
+#        ^ ^ ^ ^   \-+-/ ^
+#        | | | |     |   +---- RSTDISBL (çàïðåò âíåøíåãî ñáðîñà -> íåò)
+#        | | | |     +-------- BODLEVEL 2..0 (óðîâåíü òðèããåðà brownout -> 2.7V)
+#        | | | +-------------- WDTON (watchdog âñåãäà âêëþ÷åí -> çàïðåùåíî)
+#        | | +---------------- SPIEN (ðàçðåøèòü ïîñëåäîâàòåëüíîå ïðîãðàììèðîâàíèå -> äà)
+#        | +------------------ EESAVE (ñîõðàíÿòü EEPROM ïðè ñòèðàíèè ÷èïà -> íåò)
+#        +-------------------- DWEN (ðàçðåøèòü debug wire)
+
+
+# ñèìâîëè÷åñêèå öåëè (symbolic targets):
+help:
+	@echo "This Makefile has no default rule. Use one of the following:"
+	@echo "make hex ....... to build main.hex"
+	@echo "make program ... to flash fuses and firmware"
+	@echo "make fuse ...... to flash the fuses"
+	@echo "make flash ..... to flash the firmware"
+	@echo "make clean ..... to delete objects and hex file"
+	@echo "make erase ..... erase AVR chip" 
+	@echo "make backup ..... backup project"
+	
+hex: main.hex
+
+program: flash fuse
+
+# ïðàâèëî äëÿ ïðîãðàììèðîâàíèÿ áèò ôüþçîâ:
+fuse:
+	@[ "$(FUSE_H)" != "" -a "$(FUSE_L)" != "" ] || \
+		{ echo "*** Edit Makefile and choose values for FUSE_L and FUSE_H!"; exit 1; }
+#	$(AVRDUDE) -U hfuse:w:$(FUSE_H):m -U lfuse:w:$(FUSE_L):m
+	$(JTAGICEII) -f 0x$(FUSE_H)$(FUSE_L) 
+	
+# ïðàâèëî äëÿ ïðîøèâêè firmware:
+flash: main.hex
+#	$(AVRDUDE) -U flash:w:main.hex:i
+	$(JTAGICEII) -pf -if main.hex 
+	
+# ïðàâèëî äëÿ óäàëåíèÿ ôàéëîâ çàâèñèìîñòåé (êîòîðûå ìîãóò áûòü ïîñòðîåíû óòèëèòîé Make):
+clean:
+	rm -f main.hex main.lst main.obj main.cof main.list main.map main.eep.hex main.elf *.o usbdrv/*.o main.s usbdrv/oddebug.s usbdrv/usbdrv.s
+	rm -f usbdrv/*.*
+	rmdir usbdrv 
+	
+# Îáû÷íîå (generic) ïðàâèëî äëÿ êîìïèëèðîâàíèÿ ôàéëîâ íà ÿçûêå C:
+.c.o:
+	$(COMPILE) -c $< -o $@
+
+# Îáû÷íîå (generic) ïðàâèëî äëÿ êîìïèëÿöèè ôàéëîâ íà ÿçûêå àññåìáëåðà:
+.S.o:
+	$(COMPILE) -x assembler-with-cpp -c $< -o $@
+# "-x assembler-with-cpp" íå äîëæåí áûòü íåîáõîäèì, ïîñêîëüêó òèï ôàéëîâ
+#  ñ ðàñøèðåíèåì .S (çäåñü çàãëàâíàÿ S) çàäàí ïî óìîë÷àíèþ. Îäíàêî, ñèìâîëû 
+#  â âåðõíåì ðåãèñòðå íå âñåãäà ñîõðàíÿþòñÿ â èìåíàõ íà Windows. ×òîáû îáåñïå÷èòü
+#  ñîâìåñòèìîñòü ñ WinAVR çàäàéòå òèï ôàéëà âðó÷íóþ. 
+
+# Generic ïðàâèëî äëÿ êîìïèëèðîâàíèÿ ôàéëîâ ÿçûêà C â àññåìáëåð, óñïîëüçóåòñÿ òîëüêî äëÿ îòëàäêè.
+.c.s:
+	$(COMPILE) -S $< -o $@
+
+# ôàéëîâûå öåëè (file targets): 
+# Ïîñêîëüêó ìû íå õîòèì ïîñòàâëÿòü äðàéâåð ìíîãî ðàç ñ êàæäûì ïðåêòîì, ìû êîïèðóåì äðàéâåð 
+#  â ýòîò ïðîåêò:
+usbdrv:
+	cp -r ../../../usbdrv .
+
+main.elf: usbdrv $(OBJECTS)	# çàâèñèìîñòü (dependency) usbdrv íóæíà òîëüêî äëÿ êîïèðîâàíèÿ
+	$(COMPILE) -o main.elf $(OBJECTS)
+
+main.hex: main.elf
+	rm -f main.hex main.eep.hex
+	avr-objcopy -j .text -j .data -O ihex main.elf main.hex
+	avr-objcopy --debugging -O coff-ext-avr $< main.cof
+	avr-size main.hex
+
+# öåëè îòëàäêè:
+disasm:	main.elf
+	avr-objdump -d main.elf
+
+cpp:
+	$(COMPILE) -E main.c
+
+# öåëü î÷èñòêè êðèñòàëëà ìèêðîêîíòðîëëåðà
+erase:
+	$(JTAGICEII) -e 
+
+# öåëü áåêàïà
+backup:
+	$(RAR) a -r -dh -ep1 avrusb.rar ../../../../avrusb-20080513
+	mv avrusb.rar c:\!MyDoc\FLOPPI\avr\usb\obdev.at
+	autoname /pattern:YYMMDDhhmmss c:/!MyDoc/FLOPPI/avr/usb/obdev.at/avrusb.rar
+	
