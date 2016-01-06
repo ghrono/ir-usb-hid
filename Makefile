@@ -8,11 +8,11 @@
 # Лицензия: GNU GPL v2 (см. License.txt) или проприетарная (CommercialLicense.txt)
 # Ревизия: $Id: Makefile 553 2008-04-17 19:00:20Z cs $
 
-DEVICE  = atmega16
-F_CPU   = 16000000	# в Герцах
+DEVICE  = attiny45
+F_CPU   = 12000000	# в Герцах
 # у ATMega16 функционал перемычек почти совпадают с ATMega8 - отличие только в 2 битах FUSE_H (6 и 7)
-FUSE_L  = ff
-FUSE_H  = 09
+FUSE_L  = ef
+FUSE_H  = dd
 #AVRDUDE = avrdude -c jtag2 -p $(DEVICE) -P usb:xx -v 
 JTAGICEII = "c:/Program Files/Atmel/AVR Tools/JTAGICEmkII/jtagiceii.exe" -d $(DEVICE) -mi
 
