@@ -19,7 +19,7 @@ usbconfig.h для использования других ножек I/O USB. �
 */
 #define LED_PORT_DDR        DDRB
 #define LED_PORT_OUTPUT     PORTB
-#define LED_BIT             0
+#define LED_BIT             2
 
 #include <avr/io.h>
 #include <avr/wdt.h>
